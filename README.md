@@ -20,7 +20,7 @@ In this project, you will:
 - Go to [AWS Lightsail](https://lightsail.aws.amazon.com/).
 - Create a new instance:
   - **OS Only**: CentOS.
-  - **Minimum**: 1GB RAM.
+  - **Minimum**: 2GB RAM.
 - **Networking settings**:
   - Under the "Networking" tab of your Lightsail server,
   - **Allow All Traffic** (All protocols, all ports) temporarily for development purposes.
@@ -77,10 +77,14 @@ mkdir mysql
 mkdir itgenius-app
 ```
 
-Move the application JAR into `itgenius-app/`:
+Move the application JAR and the .env files into `itgenius-app/`:
 
 ```bash
 mv itgenius-0.0.1-SNAPSHOT.jar itgenius-app/
+```
+
+```bash
+mv .env itgenius-app/
 ```
 
 ✅ Now your structure looks like this:
@@ -89,8 +93,9 @@ mv itgenius-0.0.1-SNAPSHOT.jar itgenius-app/
 itgenius-app-mini-docker-project/
 ├── mysql/
 ├── itgenius-app/
-│   └── itgenius-0.0.1-SNAPSHOT.jar
-├── .env
+│   ├── .env
+│   ├── itgenius-0.0.1-SNAPSHOT.jar
+├── README.md
 ```
 
 ---
@@ -101,6 +106,10 @@ itgenius-app-mini-docker-project/
 
 Inside the `mysql/` directory, create a `Dockerfile`:
 
+```bash
+vi Dockerfile
+```
+
 ```Dockerfile
 # mysql/Dockerfile
 FROM mysql:8.0
@@ -110,7 +119,11 @@ COPY init.sql /docker-entrypoint-initdb.d/
 EXPOSE 3306
 ```
 
-Also create `init.sql` inside `mysql/`:
+Also inside same mysql directory, create an `init.sql` file and paste content below into it:
+
+```bash
+vi init.sql
+```
 
 ```sql
 -- mysql/init.sql
@@ -122,17 +135,26 @@ FLUSH PRIVILEGES;
 
 ---
 
-## Step 6: Create Dockerfile for Spring Boot App
+## Step 6A: Create Dockerfile for Spring Boot App
 
-Inside the `itgenius-app/` directory, create a `Dockerfile`:
+Navigate into the `itgenius-app/` directory, create a `Dockerfile`:
+
+```bash
+vi Dockerfile
+```
 
 ```Dockerfile
 # itgenius-app/Dockerfile
+
 FROM amazoncorretto:17
 
 WORKDIR /app
 
+# Copy the app jar into the container
 COPY itgenius-0.0.1-SNAPSHOT.jar app.jar
+
+# Copy the .env file into the container
+COPY .env .env
 
 EXPOSE 8085
 
@@ -145,9 +167,9 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # Environment Variables Setup
 
-## Step 7: Create/Edit `.env` File
+## Step 6B: Create/Edit `.env` File
 
-At the root of the project (`itgenius-app-mini-docker-project/`), create or Edit the `.env` file:
+still within the `itgenius-app/` directory, create or modify the `.env` to have same content as below:
 
 ```bash
 # .env
@@ -155,15 +177,10 @@ DB_URL=jdbc:mysql://mysql:3306/itgenius_app_database
 DB_USERNAME=itgenius_app_user
 DB_PASSWORD=Databaseuserstrongpassword@123
 ```
-
-Absolutely — I get exactly what you want:  
-You want it **separated** properly, with **cd into each folder**, and then **build inside** — **much cleaner**. 🚀
-
-Here’s the rewritten, polished version:
-
+NOTE: THESE VALUES IN THE  `.env` MUST CORRESPOND WITH VALUES IN THE `init.sql` FROM STEP 5
 ---
 
-## Step 8: Build Custom Docker Images
+## Step 7: Build Custom Docker Images
 
 ---
 
@@ -211,7 +228,7 @@ cd ..
 
 ---
 
-✅ Now both images are built successfully:
+✅ Now both images are built successfully . sheck with `docker images` command :
 - `my-custom-mysql:8.0`
 - `itgenius-app:1.0`
 
@@ -221,10 +238,10 @@ cd ..
 
 # Running Containers
 
-## Step 9: Launch MySQL Container
+## Step 8: Launch MySQL Container
 
 ```bash
-docker run -d --name itgenius-mysql -e MYSQL_ROOT_PASSWORD=Databaseuserstrongpassword@123 -p 3306:3306 custom-mysql:8.0
+docker run -d --name itgenius-mysql -e MYSQL_ROOT_PASSWORD=Databaseuserstrongpassword@123 -p 3306:3306 my-custom-mysql:8.0
 ```
 
 ✅ MySQL server is running.
@@ -233,7 +250,7 @@ docker run -d --name itgenius-mysql -e MYSQL_ROOT_PASSWORD=Databaseuserstrongpas
 ## Step 10: Launch Application Container
 
 ```bash
-docker run -d --name itgenius-app --link itgenius-mysql:mysql --env-file .env -p 8085:8085 itgenius-app:1.0
+docker run -d --name itgenius-app --link itgenius-mysql:mysql -p 8085:8085 itgenius-app:1.0
 ```
 
 ✅ Application is now running and connected to MySQL.
@@ -280,10 +297,23 @@ SHOW DATABASES;
 ✅ You should see:
 - `itgenius_app_database`
 - `information_schema`
-- `mysql`
 - `performance_schema`
-- `sys`
 
+# Switch to the itgenius_app_database and show tables**:
+
+```sql
+USE itgenius_app_database;
+```
+
+```sql
+SHOW TABLES;
+```
+
+# View content of the Table called `User` **:
+
+```sql
+select * from User;
+```
 ---
 
 - View logs for each container (This should be done whiles you are outside the container):
@@ -316,14 +346,15 @@ You have deployed a **multi-container Spring Boot + MySQL application** using **
 # Final Folder Structure:
 
 ```
-itgenius-app-standalone/
+itgenius-app-mini-docker-project/
 ├── mysql/
 │   ├── Dockerfile
 │   └── init.sql
 ├── itgenius-app/
 │   ├── Dockerfile
-│   └── itgenius-0.0.1-SNAPSHOT.jar
-├── .env
+│   ├── itgenius-0.0.1-SNAPSHOT.jar
+│   └── .env
+├── README.md
 ```
 
 ---
