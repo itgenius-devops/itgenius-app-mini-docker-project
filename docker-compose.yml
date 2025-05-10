@@ -1,7 +1,7 @@
 version: '3.9'
 
 networks:
-  net1:
+  test-network:
     driver: bridge
 
 services:
@@ -13,7 +13,12 @@ services:
     ports:
       - "3306:3306"
     networks:
-      - net1
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -pDatabaseuserstrongpassword@123 || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
 
   app:
     image: itgeniusdevops/itgenius-dopcker-application-repo:latest
@@ -21,7 +26,8 @@ services:
     ports:
       - "8085:8085"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     environment:
       - DB_URL=jdbc:mysql://mysql_container:3306/itgenius_app_database
       - DB_USERNAME=root
@@ -33,4 +39,4 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
     networks:
-      - net1
+      - test-network
