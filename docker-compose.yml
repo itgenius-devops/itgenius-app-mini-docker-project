@@ -1,0 +1,36 @@
+version: '3.9'
+
+networks:
+  net1:
+    driver: bridge
+
+services:
+  mysql:
+    image: itgeniusdevops/itgenius-custom-mysql-image:latest
+    container_name: mysql_container
+    environment:
+      - MYSQL_ROOT_PASSWORD=Databaseuserstrongpassword@123
+    ports:
+      - "3306:3306"
+    networks:
+      - net1
+
+  app:
+    image: itgeniusdevops/itgenius-dopcker-application-repo:latest
+    container_name: itgenius-app
+    ports:
+      - "8085:8085"
+    depends_on:
+      - mysql
+    environment:
+      - DB_URL=jdbc:mysql://mysql_container:3306/itgenius_app_database
+      - DB_USERNAME=root
+      - DB_PASSWORD=Databaseuserstrongpassword@123
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql_container:3306/itgenius_app_database
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=Databaseuserstrongpassword@123
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
+    networks:
+      - net1
